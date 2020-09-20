@@ -1,9 +1,17 @@
 {
-  "name": "translate",
+  "name": "google translate multi language",
   "version": "1.0",
   "description": "extension for google translate",
   "manifest_version": 2,
-  "permissions": [ "tabs", "http://translate.google.com/*", "https://translate.google.com/*", "activeTab", "background", "clipboardWrite" ],
+  "permissions": [
+    "tabs",
+    "http://translate.google.com/*",
+    "https://translate.google.com/*",
+    "activeTab",
+    "background",
+    "clipboardWrite",
+    "storage"
+  ],
   "browser_action": {
     "default_icon": "icon.png",
     "default_popup": "popup.html"

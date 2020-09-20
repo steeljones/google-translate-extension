@@ -2,16 +2,80 @@
 <html>
   <head>
     <style>
+      body{
+          width: 300px;
+          margin: 10px;
+      }
       .hidden{
           display: none;
+      }
+      h3{
+          margin: 5px 0;
+          font-size: 16px;
       }
       #notification {
           color: green;
       }
+      div#languages{
+          margin: 10px 0;
+      }
+      #languages div.language{
+          border: 1px solid black;
+          border-radius: 4px;
+          height: 30px;
+          line-height: 30px;
+          margin: 5px 5px 0px 0px;
+          font-size: 14px;
+          padding: 0px 5px 0px 3px;
+          display: inline-block;
+      }
+      #languages div.language span.remove-language{
+          float: right;
+          font-size: 18px;
+          padding-left: 8px;
+          cursor: pointer;
+      }
+      #new-language{
+          margin-bottom: 10px;
+          border: 1px solid black;
+          border-radius: 4px;
+          height: 30px;
+          line-height: 30px;
+          margin: 0px 10px 10px 0px;
+          font-size: 14px;
+          padding: 0px 5px 0px 0px;
+          color: gray;
+          cursor: pointer;
+      }
+      button {
+          width: 100%;
+          color: white;
+          background-color: black;
+          height: 40px;
+          line-height: 40px;
+          font-size: 16px;
+          border: none;
+          border-radius: 4px;
+          margin: 10px 0 0 0;
+      }
+      textarea{
+          padding: 5px;
+          width: 280px;
+      }
+      textarea:focus{
+          outline: 1px solid black;
+      }
     </style>
   </head>
   <body>
-    <textarea id="input" rows="10" cols="30"></textarea>
+    <div id="languages">
+      <h3>Languages</h3>
+    </div>
+    <!--button id="add-language">Add Lanugage</button-->
+    <select id="new-language">
+      <option disabled selected value="" >Add Lanugage</option>
+    </select>
+    <textarea id="input" rows="10" cols="30" placeholder="Enter text here"></textarea>
     <button id="submit">Translate</button>
     <div id="output"></div>
     <!--div>Translating...</div-->
