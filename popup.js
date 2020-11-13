@@ -1,18 +1,32 @@
-let fullText, inputEl, output, textToCopy, notificationEl, languagesContainer,
+let fullText, inputEl, outputEl, textToCopy, notificationEl, languagesContainer,
     newLanguageSelect;
 
 let translationCount = 0;
 
 let targetLanguages;
 
+let googleTranslateUrl = 'translate.google.com';
+
 
 function init(){
+  //If we're not at google translate, navigate to it
+
+  /*
+  chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+    if(!tabs[0].url.includes(googleTranslateUrl)){
+    chrome.tabs.update({url: 'https://' + googleTranslateUrl})
+    }
+  });
+  */
+  //chrome.tabs.update({url: 'https://' + googleTranslateUrl})
+  //runCodeInClientTab(`window.location..replace( 'https://translate.google.com' )`)
+
   loadTargetLanguages();
   
-  output = document.getElementById('output');
+  outputEl = document.getElementById('output');
 
   document.getElementById( 'input' ).focus();
-  
+
   notificationEl = document.getElementById('notification');
   
   initUI();
@@ -25,7 +39,6 @@ function handleMessage(request, sender, sendResponse){
     The translate tab sends messages containing the result of a translation to this script.
     This is the handler for those messages
    */
-  output = document.getElementById('output');
   translationCount++;
 
   if( request.languageList ){
@@ -38,7 +51,7 @@ function handleMessage(request, sender, sendResponse){
   
   fullText += text + '\n\n';
   textToCopy += text + '\n\n';
-  output.innerText = fullText;
+  outputEl.innerText = fullText;
 
   if(translationCount == targetLanguages.length){
     notificationEl.classList.remove('hidden');
@@ -51,13 +64,22 @@ async function handleSubmit(){
   let text = inputEl.value;
   if(!text.trim()) return
 
-  runCodeInClientTab( `document.querySelector('textarea').value = "${text}"` );
+  runCodeInClientTab( `
+    document.querySelector('textarea').value = "${text}"
+    event = new Event('input', {
+      bubbles: true,
+      cancelable: true,
+    });
+    document.querySelector('textarea').dispatchEvent(event);
+  ` );
+
+  
   await timeout( 100 );
   
   fullText = '\n\n' + text + '\n\n';
   textToCopy = "";
   translationCount = 0;
-  output.innerText = '';
+  outputEl.innerText = '';
   notificationEl.classList.add('hidden')
   
   for(let l of targetLanguages){
@@ -97,8 +119,9 @@ function requestNewLanguagesList(){
     popup
   */
   let requestCode = `
-    languages = Array.from(document.querySelector('.language_list_tl_list').querySelectorAll('.language_list_item_language_name'))
-      .map( el => el.innerText );
+    parent = Array.from(document.querySelectorAll('div')).filter(d => d.innerText == 'All languages')[1].parentElement;
+    languages = Array.from(parent.children).slice(1)
+      .map( el => el.children[1].innerText );
     chrome.runtime.sendMessage({ languageList: languages });
   `;
   runCodeInClientTab( requestCode )
@@ -158,26 +181,30 @@ async function waitForTranslation(language){
     Get a translation for a given language from the google translate tab
     */
   openLanguagesMenu()
-  await timeout( 500 );
+  await timeout( 100 );
   clickLanguageLink(language)
   await timeout( 500 )
   requestResult();
-  await timeout( 500 );
+  await timeout( 100 );
+  openLanguagesMenu();
+  await timeout( 100 );
 }
 
 function clickLanguageLink(language){
   /*
     Click a language link on the google translate tab.
     This selects the language as the current target for translation
-   */
+  */
   runCodeInClientTab(
-  `languageLinks = document.querySelector('.language_list_tl_list').querySelectorAll('.language_list_item_language_name');
-  for(let n of languageLinks){
-    if(n.innerText == "${language}"){
-      n.parentElement.click();
-      break;
+    `parent = Array.from(document.querySelectorAll('div')).filter(d => d.innerText == 'All languages')[1].parentElement;
+    languageLinks = Array.from(parent.children).slice(1).map(el => el.children[1])
+    for(let n of languageLinks){
+      if(n.innerText == "${language}"){
+        n.parentElement.click();
+        break;
+      }
     }
-  }`
+  `
   )
 }
 
@@ -185,7 +212,10 @@ function openLanguagesMenu(){
   /*
     Open the language menu in the google translate tab.  The menu needs to be open to click a language link.
    */
-  runCodeInClientTab("document.querySelector('.tlid-open-target-language-list').click()")
+  runCodeInClientTab(`
+  Array.from(document.querySelectorAll('button')).filter(el => el.ariaLabel == 'More source languages')[0]
+    .click();
+  `);
 }
 
 function runCodeInClientTab(codeString){
@@ -202,9 +232,9 @@ function runCodeInClientTab(codeString){
 function requestResult(){
   /*
     Copy the translation result from google translate
-   */
+  */
   let sendMessageCode = `
-    output = document.querySelector('.tlid-translation').innerText;
+    output = Array.from(document.querySelectorAll('div')).filter(el => el.dataset.text).slice(-1)[0].dataset.text
     chrome.runtime.sendMessage({ text: output });
   `;
   runCodeInClientTab( sendMessageCode );
